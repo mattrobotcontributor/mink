@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.14] - 2025-09-26
+
+### Changed
+
+- Added joint locking via QP equality constraints as an alternative to removing the joints from the Mujoco model.
+
 ## [0.0.13] - 2025-09-12
 
 ### Bugfix
