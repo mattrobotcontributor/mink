@@ -93,34 +93,40 @@ class ConfigurationLimit(Limit):
             Pair :math:`(G, h)` representing the inequality constraint as
             :math:`G \Delta q \leq h`, or ``None`` if there is no limit.
         """
-        del dt  # Unused.
         if self.projection_matrix is None:
             return Constraint()
 
+        # NOTE: with dt=1.0, mj_differentiatePos computes the velocity that would
+        # take us from qpos1 to qpos2 in one second.
         # Upper.
-        delta_q_max = np.empty((self.model.nv,))
+        vel_to_upper_limit = np.empty((self.model.nv,))
         mujoco.mj_differentiatePos(
             m=self.model,
-            qvel=delta_q_max,
+            qvel=vel_to_upper_limit,
             dt=1.0,
             qpos1=configuration.q,
             qpos2=self.upper,
         )
 
         # Lower.
-        delta_q_min = np.empty((self.model.nv,))
+        vel_from_lower_limit = np.empty((self.model.nv,))
         mujoco.mj_differentiatePos(
             m=self.model,
-            qvel=delta_q_min,
+            qvel=vel_from_lower_limit,
             dt=1.0,
-            # NOTE: mujoco.mj_differentiatePos does `qpos2 - qpos1` so notice the order
+            # NOTE: mj_differentiatePos does `qpos2 - qpos1` so notice the order
             # swap here compared to above.
             qpos1=self.lower,
             qpos2=configuration.q,
         )
 
-        p_min = self.gain * delta_q_min[self.indices]
-        p_max = self.gain * delta_q_max[self.indices]
+        # The QP solves for joint displacements, so we need to scale the joint
+        # velocity limits by the timestep dt.
+        # The gain is a safety factor to prevent the joint from moving too close
+        # to the limit.
+        max_displacement = self.gain * vel_to_upper_limit[self.indices] * dt
+        min_displacement = self.gain * vel_from_lower_limit[self.indices] * dt
+
         G = np.vstack([self.projection_matrix, -self.projection_matrix])
-        h = np.hstack([p_max, p_min])
+        h = np.hstack([max_displacement, min_displacement])
         return Constraint(G=G, h=h)
