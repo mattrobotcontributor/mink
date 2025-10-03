@@ -2,11 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.0.14] - 2025-09-26
+## Unreleased
 
-### Changed
+### Added
 
-- Added joint locking via QP equality constraints as an alternative to removing the joints from the Mujoco model.
+* Improve test coverage.
+* Add more tests to `test_configuration_limit.py` and `test_velocity_limit.py`.
+* Added joint locking via QP equality constraints as an alternative to removing the joints from the Mujoco model.
 
 ## [0.0.13] - 2025-09-12
 
